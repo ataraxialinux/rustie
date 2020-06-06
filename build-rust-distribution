@@ -29,7 +29,7 @@ export OUT="$CWD/out"
 export SRC="$OUT/src"
 export TOOLS="$OUT/tools"
 
-export RUSTVER="1.43.1"
+export RUSTVER="1.44.0"
 export LIBRESSLVER="3.1.2"
 
 export LC_ALL="POSIX"
