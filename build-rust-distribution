@@ -10,15 +10,15 @@ mktoolchain() {
 	case $1 in
 		armv7)
 			make $MKOPTS TARGET=armv7l-linux-musleabihf GCC_CONFIG="--with-arch=armv7-a --with-fpu=neon"
-			make $MKOPTS OUTPUT=/opt/rustie TARGET=armv7l-linux-musleabihf GCC_CONFIG="--with-arch=armv7-a --with-fpu=neon" install
+			make $MKOPTS OUTPUT=$SRC TARGET=armv7l-linux-musleabihf GCC_CONFIG="--with-arch=armv7-a --with-fpu=neon" install
 			;;
 		armv6)
 			make $MKOPTS TARGET=armv6l-linux-musleabihf GCC_CONFIG="--with-arch=armv6 --with-fpu=vfp"
-			make $MKOPTS OUTPUT=/opt/rustie TARGET=armv6l-linux-musleabihf GCC_CONFIG="--with-arch=armv7-a --with-fpu=vfpv3-d16" install
+			make $MKOPTS OUTPUT=$SRC TARGET=armv6l-linux-musleabihf GCC_CONFIG="--with-arch=armv7-a --with-fpu=vfpv3-d16" install
 			;;
 		*)
 			make $MKOPTS TARGET=$i-linux-musl
-			make $MKOPTS OUTPUT=/opt/rustie TARGET=$i-linux-musl install
+			make $MKOPTS OUTPUT=$SRC TARGET=$i-linux-musl install
 			;;
 	esac
 }
@@ -30,13 +30,12 @@ export SRC="$OUT/src"
 export TOOLS="$OUT/tools"
 
 export RUSTVER="1.44.1"
-export LIBRESSLVER="3.2.0"
 
 export LC_ALL="POSIX"
 export HOSTCC="gcc"
 export HOSTCXX="g++"
 export XHOST="$(echo ${MACHTYPE} | sed -e 's/-[^-]*/-cross/')"
-export PATH="/opt/rustie/bin:$PATH"
+export PATH="$SRC/bin:$PATH"
 
 if [ -z $MKOPTS ]; then
 	export MKJOBS="$(expr $(nproc) + 1)"
@@ -48,41 +47,28 @@ rm -rf $OUT
 mkdir -p $SRC $TOOLS
 
 if [ "$TOOLCHAIN" != "no" ]; then
-	cd $SRC
-	git clone https://github.com/richfelker/musl-cross-make.git --depth 1
-	cd musl-cross-make
+#	cd $SRC
+#	git clone https://github.com/richfelker/musl-cross-make.git --depth 1
+#	cd musl-cross-make
+#
+#	for i in x86_64 i686 aarch64 armv7l arm powerpc64le powerpc64 powerpc; do
+#		mktoolchain $i
+#	done
 
-	for i in x86_64 i686 aarch64 armv7 armv6 powerpc64le powerpc64 powerpc; do
-		mktoolchain $i
-	done
-
-	cd $SRC
-	wget https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/libressl-$LIBRESSLVER.tar.gz
-	tar -xvf libressl-$LIBRESSLVER.tar.gz
-	for i in x86_64-linux-musl i686-linux-musl aarch64-linux-musl armv7l-linux-musleabihf armv6l-linux-musleabihf powerpc64le-linux-musl powerpc64-linux-musl powerpc-linux-musl; do
-		case $i in
-			arm*)
-				asm="--disable-asm"
-				;;
-		esac
-
-		cd $SRC/libressl-$LIBRESSLVER
-		mkdir build-$i
-		cd build-$i
-		CFLAGS="-fPIE -Os -g0 -s -pipe" \
-		../configure \
-			--build=$XHOST \
-			--host=$i \
-			--prefix=/opt/rustie/$i \
-			--disable-shared $asm
-		make $MKOPTS
-		make $MKOPTS install
+	cd "$SRC"
+	for i in x86_64-linux-musl i686-linux-musl \
+		aarch64-linux-musl armv7l-linux-musleabihf arm-linux-musleabihf \
+		mips64-linux-musl mips-linux-musl \
+		powerpc64le-linux-musl powerpc64-linux-musl powerpc-linux-musl; do
+		wget http://more.musl.cc/10/x86_64-linux-musl/$i-cross.tgz
+		bsdtar -xvf $i-cross.tgz
+		export PATH="$SRC/$i-cross/bin:$PATH"
 	done
 fi
 
 cd $SRC
 wget https://static.rust-lang.org/dist/rustc-$RUSTVER-src.tar.gz
-tar -xvf rustc-$RUSTVER-src.tar.gz
+bsdtar -xvf rustc-$RUSTVER-src.tar.gz
 cd rustc-$RUSTVER-src
 patch -Np1 -i "$STUFF"/musl.patch
 patch -Np1 -i "$STUFF"/libressl.patch
@@ -108,6 +94,8 @@ host = [
   "aarch64-unknown-linux-musl",
   "armv7-unknown-linux-musleabihf",
   "arm-unknown-linux-musleabihf",
+  "mips64-unknown-linux-muslabi64",
+  "mips-unknown-linux-musl",
   "powerpc64le-unknown-linux-musl",
   "powerpc64-unknown-linux-musl",
   "powerpc-unknown-linux-musl"
@@ -141,67 +129,83 @@ codegen-tests = false
 cc = "x86_64-linux-musl-gcc"
 cxx = "x86_64-linux-musl-g++"
 linker = "x86_64-linux-musl-gcc"
-musl-root = "/opt/rustie/x86_64-linux-musl"
+musl-root = "$SRC/x86_64-linux-musl-cross/x86_64-linux-musl"
 crt-static = false
 
 [target.i686-unknown-linux-musl]
 cc = "i686-linux-musl-gcc"
 cxx = "i686-linux-musl-g++"
 linker = "i686-linux-musl-gcc"
-musl-root = "/opt/rustie/i686-linux-musl"
+musl-root = "$SRC/i686-linux-musl-cross/i686-linux-musl"
 crt-static = false
 
 [target.aarch64-unknown-linux-musl]
 cc = "aarch64-linux-musl-gcc"
 cxx = "aarch64-linux-musl-g++"
 linker = "aarch64-linux-musl-gcc"
-musl-root = "/opt/rustie/aarch64-linux-musl"
+musl-root = "$SRC/aarch64-linux-musl-cross/aarch64-linux-musl"
 crt-static = false
 
 [target.armv7-unknown-linux-musleabihf]
 cc = "armv7l-linux-musleabihf-gcc"
 cxx = "armv7l-linux-musleabihf-g++"
 linker = "armv7l-linux-musleabihf-gcc"
-musl-root = "/opt/rustie/armv7l-linux-musleabihf"
+musl-root = "$SRC/armv7l-linux-musleabihf-cross/armv7l-linux-musleabihf"
 crt-static = false
 
 [target.arm-unknown-linux-musleabihf]
-cc = "armv6l-linux-musleabihf-gcc"
-cxx = "armv6l-linux-musleabihf-g++"
-linker = "armv6l-linux-musleabihf-gcc"
-musl-root = "/opt/rustie/armv6l-linux-musleabihf"
+cc = "arm-linux-musleabihf-gcc"
+cxx = "arm-linux-musleabihf-g++"
+linker = "arm-linux-musleabihf-gcc"
+musl-root = "$SRC/arm-linux-musleabihf-cross/arm-linux-musleabihf"
+crt-static = false
+
+[target.mips64-unknown-linux-muslabi64]
+cc = "mips64-linux-musl-gcc"
+cxx = "mips64-linux-musl-g++"
+linker = "mips64-linux-musl-gcc"
+musl-root = "$SRC/mips64-linux-musl-cross/mips64-linux-musl"
+crt-static = false
+
+[target.mips-unknown-linux-musl]
+cc = "mips-linux-musl-gcc"
+cxx = "mips-linux-musl-g++"
+linker = "mips-linux-musl-gcc"
+musl-root = "$SRC/mips-linux-musl-cross/mips-linux-musl"
 crt-static = false
 
 [target.powerpc64le-unknown-linux-musl]
 cc = "powerpc64le-linux-musl-gcc"
 cxx = "powerpc64le-linux-musl-g++"
 linker = "powerpc64le-linux-musl-gcc"
-musl-root = "/opt/rustie/powerpc64le-linux-musl"
+musl-root = "$SRC/powerpc64le-linux-musl-cross/powerpc64le-linux-musl"
 crt-static = false
 
 [target.powerpc64-unknown-linux-musl]
 cc = "powerpc64-linux-musl-gcc"
 cxx = "powerpc64-linux-musl-g++"
 linker = "powerpc64-linux-musl-gcc"
-musl-root = "/opt/rustie/powerpc64-linux-musl"
+musl-root = "$SRC/powerpc64-linux-musl-cross/powerpc64-linux-musl"
 crt-static = false
 
 [target.powerpc-unknown-linux-musl]
 cc = "powerpc-linux-musl-gcc"
 cxx = "powerpc-linux-musl-g++"
 linker = "powerpc-linux-musl-gcc"
-musl-root = "/opt/rustie/powerpc-linux-musl"
+musl-root = "$SRC/powerpc-linux-musl-cross/powerpc-linux-musl"
 crt-static = false
 EOF
 
 export RUST_BACKTRACE=1
-export X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="/opt/rustie/x86_64-linux-musl"
-export I686_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="/opt/rustie/i686-linux-musl"
-export AARCH64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="/opt/rustie/aarch64-linux-musl"
-export ARMV7_UNKNOWN_LINUX_MUSLEABIHF_OPENSSL_DIR="/opt/rustie/armv7l-linux-musleabihf"
-export ARM_UNKNOWN_LINUX_MUSLEABIHF_OPENSSL_DIR="/opt/rustie/armv6l-linux-musleabihf"
-export POWERPC64LE_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="/opt/rustie/powerpc64le-linux-musl"
-export POWERPC64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="/opt/rustie/powerpc64-linux-musl"
-export POWERPC_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="/opt/rustie/powerpc-linux-musl"
+export X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/x86_64-linux-musl-cross/x86_64-linux-musl"
+export I686_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/i686-linux-musl-cross/i686-linux-musl"
+export AARCH64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/aarch64-linux-musl-cross/aarch64-linux-musl"
+export ARMV7_UNKNOWN_LINUX_MUSLEABIHF_OPENSSL_DIR="$SRC/armv7l-linux-musleabihf-cross/armv7l-linux-musleabihf"
+export ARM_UNKNOWN_LINUX_MUSLEABIHF_OPENSSL_DIR="$SRC/arm-linux-musleabihf-cross/arm-linux-musleabihf"
+export MIPS64_UNKNOWN_LINUX_MUSLABI64_OPENSSL_DIR="$SRC/mips64-linux-musl-cross/mips64-linux-musl"
+export MIPS_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/mips-linux-musl-cross/mips-linux-musl"
+export POWERPC64LE_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/powerpc64le-linux-musl-cross/powerpc64le-linux-musl"
+export POWERPC64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/powerpc64-linux-musl-cross/powerpc64-linux-musl"
+export POWERPC_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/powerpc-linux-musl-cross/powerpc-linux-musl"
 
 ./x.py dist -j$MKJOBS
