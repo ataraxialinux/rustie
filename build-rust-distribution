@@ -72,7 +72,7 @@ bsdtar -xvf rustc-$RUSTVER-src.tar.gz
 cd rustc-$RUSTVER-src
 patch -Np1 -i "$STUFF"/musl.patch
 patch -Np1 -i "$STUFF"/libressl.patch
-patch -Np1 -i "$STUFF"/hardened.patch
+patch -Np1 -i "$STUFF"/hardening.patch
 
 clear_vendor_checksums libc
 clear_vendor_checksums openssl-src
