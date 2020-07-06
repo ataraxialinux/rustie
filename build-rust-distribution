@@ -85,9 +85,10 @@ release-debuginfo = false
 assertions = false
 static-libstdcpp = true
 ninja = true
-targets = "AArch64;ARM;X86;PowerPC"
+targets = "AArch64;ARM;X86;PowerPC;Mips"
 
 [build]
+build = "x86_64-unknown-linux-musl"
 host = [
   "x86_64-unknown-linux-musl",
   "i686-unknown-linux-musl",
