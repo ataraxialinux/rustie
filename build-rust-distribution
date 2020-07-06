@@ -61,7 +61,11 @@ if [ "$TOOLCHAIN" != "no" ]; then
 		mips64-linux-musl mips-linux-musl \
 		powerpc64le-linux-musl powerpc64-linux-musl powerpc-linux-musl; do
 		wget http://more.musl.cc/10/x86_64-linux-musl/$i-cross.tgz
+		wget http://pkg.musl.cc/libexecinfo/$i.tgz -O libexecinfo-$i.tgz
+		wget http://pkg.musl.cc/openssl/$i.tgz -O openssl-$i.tgz
 		bsdtar -xvf $i-cross.tgz
+		bsdtar -C "$SRC"/$i-cross/$i -xvf libexecinfo-$i.tgz
+		bsdtar -C "$SRC"/$i-cross/$i -xvf openssl-$i.tgz
 		export PATH="$SRC/$i-cross/bin:$PATH"
 	done
 fi
