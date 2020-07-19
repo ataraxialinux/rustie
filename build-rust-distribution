@@ -32,7 +32,7 @@ mkdir -p $SRC $TOOLS
 if [ "$TOOLCHAIN" != "no" ]; then
 	cd "$SRC"
 	for i in x86_64-linux-musl i686-linux-musl aarch64-linux-musl \
-		powerpc64le-linux-musl powerpc64-linux-musl powerpc-linux-musl; do
+		powerpc64le-linux-musl powerpc-linux-musl; do
 		wget http://more.musl.cc/10/x86_64-linux-musl/$i-cross.tgz
 		wget http://pkg.musl.cc/libexecinfo/$i.tgz -O libexecinfo-$i.tgz
 		wget http://pkg.musl.cc/openssl/$i.tgz -O openssl-$i.tgz
@@ -50,7 +50,6 @@ cd rustc-$RUSTVER-src
 
 patch -Np1 -i "$STUFF"/musl.patch
 patch -Np1 -i "$STUFF"/libressl.patch
-patch -Np1 -i "$STUFF"/0015-Use-ELFv2-ABI-on-all-powerpc64-targets.patch
 
 clear_vendor_checksums libc
 clear_vendor_checksums openssl-src
@@ -71,7 +70,6 @@ host = [
   "i686-unknown-linux-musl",
   "aarch64-unknown-linux-musl",
   "powerpc64le-unknown-linux-musl",
-  "powerpc64-unknown-linux-musl",
   "powerpc-unknown-linux-musl"
 ]
 cargo = "$(which cargo)"
@@ -128,13 +126,6 @@ linker = "powerpc64le-linux-musl-gcc"
 musl-root = "$SRC/powerpc64le-linux-musl-cross/powerpc64le-linux-musl"
 crt-static = false
 
-[target.powerpc64-unknown-linux-musl]
-cc = "powerpc64-linux-musl-gcc"
-cxx = "powerpc64-linux-musl-g++"
-linker = "powerpc64-linux-musl-gcc"
-musl-root = "$SRC/powerpc64-linux-musl-cross/powerpc64-linux-musl"
-crt-static = false
-
 [target.powerpc-unknown-linux-musl]
 cc = "powerpc-linux-musl-gcc"
 cxx = "powerpc-linux-musl-g++"
@@ -148,7 +139,6 @@ export X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/x86_64-linux-musl-cross/x86_6
 export I686_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/i686-linux-musl-cross/i686-linux-musl"
 export AARCH64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/aarch64-linux-musl-cross/aarch64-linux-musl"
 export POWERPC64LE_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/powerpc64le-linux-musl-cross/powerpc64le-linux-musl"
-export POWERPC64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/powerpc64-linux-musl-cross/powerpc64-linux-musl"
 export POWERPC_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/powerpc-linux-musl-cross/powerpc-linux-musl"
 
 ./x.py build -j$MKJOBS
