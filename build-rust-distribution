@@ -12,7 +12,7 @@ export OUT="$CWD/out"
 export SRC="$OUT/src"
 export TOOLS="$OUT/tools"
 
-export RUSTVER="1.45.2"
+export RUSTVER="1.46.0"
 
 export LC_ALL="POSIX"
 export HOSTCC="gcc"
@@ -31,7 +31,7 @@ mkdir -p $SRC $TOOLS
 
 if [ "$TOOLCHAIN" != "no" ]; then
 	cd "$SRC"
-	for i in x86_64-linux-musl i686-linux-musl aarch64-linux-musl armv7l-linux-musleabihf arm-linux-musleabihf; do
+	for i in x86_64-linux-musl i686-linux-musl aarch64-linux-musl; do
 		wget http://more.musl.cc/10/x86_64-linux-musl/$i-cross.tgz
 		wget http://pkg.musl.cc/libexecinfo/$i.tgz -O libexecinfo-$i.tgz
 		wget http://pkg.musl.cc/openssl/$i.tgz -O openssl-$i.tgz
@@ -47,8 +47,9 @@ wget https://static.rust-lang.org/dist/rustc-$RUSTVER-src.tar.gz
 bsdtar -xvf rustc-$RUSTVER-src.tar.gz
 cd rustc-$RUSTVER-src
 
-patch -Np1 -i "$STUFF"/musl.patch
-patch -Np1 -i "$STUFF"/libressl.patch
+patch -Np1 -i "$STUFF"/0006-Prefer-libgcc_eh-over-libunwind-for-musl.patch
+patch -Np1 -i "$STUFF"/musl-dont-use-crt-static.patch
+patch -Np1 -i "$STUFF"/1.44.0-libressl.patch
 
 clear_vendor_checksums libc
 clear_vendor_checksums openssl-src
@@ -61,7 +62,7 @@ release-debuginfo = false
 assertions = false
 static-libstdcpp = true
 ninja = true
-targets = "AArch64;ARM;X86"
+targets = "AArch64;X86"
 
 [build]
 host = [
@@ -115,27 +116,11 @@ cxx = "aarch64-linux-musl-g++"
 linker = "aarch64-linux-musl-gcc"
 musl-root = "$SRC/aarch64-linux-musl-cross/aarch64-linux-musl"
 crt-static = false
-
-[target.armv7-unknown-linux-musleabihf]
-cc = "armv7l-linux-musleabihf-gcc"
-cxx = "armv7l-linux-musleabihf-g++"
-linker = "armv7l-linux-musleabihf-gcc"
-musl-root = "$SRC/armv7l-linux-musleabihf-cross/armv7l-linux-musleabihf"
-crt-static = false
-
-[target.arm-unknown-linux-musleabihf]
-cc = "arm-linux-musleabihf-gcc"
-cxx = "arm-linux-musleabihf-g++"
-linker = "arm-linux-musleabihf-gcc"
-musl-root = "$SRC/arm-linux-musleabihf-cross/arm-linux-musleabihf"
-crt-static = false
 EOF
 
 export RUST_BACKTRACE=1
 export X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/x86_64-linux-musl-cross/x86_64-linux-musl"
 export I686_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/i686-linux-musl-cross/i686-linux-musl"
 export AARCH64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/aarch64-linux-musl-cross/aarch64-linux-musl"
-export ARMV7_UNKNOWN_LINUX_MUSLEABIHF_OPENSSL_DIR="$SRC/armv7l-linux-musleabihf-cross/armv7l-linux-musleabihf"
-export ARM_UNKNOWN_LINUX_MUSLEABIHF_OPENSSL_DIR="$SRC/arm-linux-musleabihf-cross/arm-linux-musleabihf"
 
-./x.py build -j$MKJOBS
+./x.py dist -j$MKJOBS
