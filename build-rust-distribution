@@ -65,6 +65,7 @@ ninja = true
 targets = "AArch64;ARM;X86"
 
 [build]
+build = "x86_64-unknown-linux-musl"
 host = [
   "x86_64-unknown-linux-musl",
   "aarch64-unknown-linux-musl",
@@ -127,6 +128,7 @@ crt-static = false
 EOF
 
 export RUST_BACKTRACE=1
+export SSL_CERT_FILE="/etc/ssl/certs/ca-certificates.crt"
 export X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/x86_64-linux-musl-cross/x86_64-linux-musl"
 export AARCH64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/aarch64-linux-musl-cross/aarch64-linux-musl"
 export ARMV7_UNKNOWN_LINUX_MUSLEABIHF_OPENSSL_DIR="$SRC/armv7l-linux-musleabihf-cross/armv7l-linux-musleabihf"
