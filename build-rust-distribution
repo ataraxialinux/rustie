@@ -31,7 +31,7 @@ mkdir -p $SRC $TOOLS
 
 if [ "$TOOLCHAIN" != "no" ]; then
 	cd "$SRC"
-	for i in x86_64-linux-musl i686-linux-musl aarch64-linux-musl; do
+	for i in x86_64-linux-musl aarch64-linux-musl armv7l-linux-musleabihf arm-linux-musleabihf; do
 		wget http://more.musl.cc/10/x86_64-linux-musl/$i-cross.tgz
 		wget http://pkg.musl.cc/libexecinfo/$i.tgz -O libexecinfo-$i.tgz
 		wget http://pkg.musl.cc/openssl/$i.tgz -O openssl-$i.tgz
@@ -62,13 +62,14 @@ release-debuginfo = false
 assertions = false
 static-libstdcpp = true
 ninja = true
-targets = "AArch64;X86"
+targets = "AArch64;ARM;X86"
 
 [build]
 host = [
   "x86_64-unknown-linux-musl",
-  "i686-unknown-linux-musl",
   "aarch64-unknown-linux-musl",
+  "armv7-unknown-linux-musleabihf",
+  "arm-unknown-linux-musleabihf",
 ]
 cargo = "$(which cargo)"
 rustc = "$(which rustc)"
@@ -103,24 +104,32 @@ linker = "x86_64-linux-musl-gcc"
 musl-root = "$SRC/x86_64-linux-musl-cross/x86_64-linux-musl"
 crt-static = false
 
-[target.i686-unknown-linux-musl]
-cc = "i686-linux-musl-gcc"
-cxx = "i686-linux-musl-g++"
-linker = "i686-linux-musl-gcc"
-musl-root = "$SRC/i686-linux-musl-cross/i686-linux-musl"
-crt-static = false
-
 [target.aarch64-unknown-linux-musl]
 cc = "aarch64-linux-musl-gcc"
 cxx = "aarch64-linux-musl-g++"
 linker = "aarch64-linux-musl-gcc"
 musl-root = "$SRC/aarch64-linux-musl-cross/aarch64-linux-musl"
 crt-static = false
+
+[target.armv7-unknown-linux-musleabihf]
+cc = "armv7l-linux-musleabihf-gcc"
+cxx = "armv7l-linux-musleabihf-g++"
+linker = "armv7l-linux-musleabihf-gcc"
+musl-root = "$SRC/armv7l-linux-musleabihf-cross/armv7l-linux-musleabihf"
+crt-static = false
+
+[target.arm-unknown-linux-musleabihf]
+cc = "arm-linux-musleabihf-gcc"
+cxx = "arm-linux-musleabihf-g++"
+linker = "arm-linux-musleabihf-gcc"
+musl-root = "$SRC/arm-linux-musleabihf-cross/arm-linux-musleabihf"
+crt-static = false
 EOF
 
 export RUST_BACKTRACE=1
 export X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/x86_64-linux-musl-cross/x86_64-linux-musl"
-export I686_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/i686-linux-musl-cross/i686-linux-musl"
 export AARCH64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/aarch64-linux-musl-cross/aarch64-linux-musl"
+export ARMV7_UNKNOWN_LINUX_MUSLEABIHF_OPENSSL_DIR="$SRC/armv7l-linux-musleabihf-cross/armv7l-linux-musleabihf"
+export ARM_UNKNOWN_LINUX_MUSLEABIHF_OPENSSL_DIR="$SRC/arm-linux-musleabihf-cross/arm-linux-musleabihf"
 
 ./x.py dist -j$MKJOBS
