@@ -58,6 +58,7 @@ if [ "$TOOLCHAIN" != "no" ]; then
 	cd $SRC
 	git clone https://github.com/richfelker/musl-cross-make.git --depth 1
 	cd musl-cross-make
+	sed -i 's/sha1sum -c/true/g' Makefile
 
 	for i in x86_64 aarch64 armv7 arm powerpc64le powerpc64 powerpc; do
 		mktoolchain $i
