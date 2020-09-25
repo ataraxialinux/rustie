@@ -51,10 +51,10 @@ fi
 
 export MAKEFLAGS="-j$MKJOBS"
 
-rm -rf $OUT
-mkdir -p $SRC $TOOLS
-
 if [ "$TOOLCHAIN" != "no" ]; then
+	rm -rf $OUT
+	mkdir -p $SRC $TOOLS
+
 	cd $SRC
 	git clone https://github.com/richfelker/musl-cross-make.git --depth 1
 	cd musl-cross-make
