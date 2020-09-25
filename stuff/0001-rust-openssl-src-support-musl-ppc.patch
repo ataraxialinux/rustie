@@ -1,0 +1,27 @@
+From ba60bc367e96ee7ebc476f4bf0350f0479a5c262 Mon Sep 17 00:00:00 2001
+From: Ishimoto Shinobu <nagakamira@gmail.com>
+Date: Sat, 26 Sep 2020 02:44:47 +0900
+Subject: [PATCH] rust: openssl-src: support musl ppc
+
+Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
+---
+ vendor/openssl-src/src/lib.rs | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/vendor/openssl-src/src/lib.rs b/vendor/openssl-src/src/lib.rs
+index faa82c8d7..9887d956b 100644
+--- a/vendor/openssl-src/src/lib.rs
++++ b/vendor/openssl-src/src/lib.rs
+@@ -174,6 +174,9 @@ impl Build {
+             "powerpc64-unknown-freebsd" => "BSD-generic64",
+             "powerpc64-unknown-linux-gnu" => "linux-ppc64",
+             "powerpc64le-unknown-linux-gnu" => "linux-ppc64le",
++            "powerpc-unknown-linux-musl" => "linux-ppc",
++            "powerpc64-unknown-linux-musl" => "linux-ppc64",
++            "powerpc64le-unknown-linux-musl" => "linux-ppc64le",
+             "riscv64gc-unknown-linux-gnu" => "linux-generic64",
+             "s390x-unknown-linux-gnu" => "linux64-s390x",
+             "x86_64-apple-darwin" => "darwin64-x86_64-cc",
+-- 
+2.28.0
+

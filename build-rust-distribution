@@ -86,6 +86,7 @@ cd rustc-$RUSTVER-src
 
 patch -Np1 -i "$STUFF"/0006-Prefer-libgcc_eh-over-libunwind-for-musl.patch
 patch -Np1 -i "$STUFF"/musl-dont-use-crt-static.patch
+patch -Np1 -i "$STUFF"/0001-rust-openssl-src-support-musl-ppc.patch
 
 clear_vendor_checksums libc
 clear_vendor_checksums openssl-src
