@@ -12,9 +12,17 @@ mktoolchain() {
 			make $MKOPTS TARGET=armv7l-linux-musleabihf GCC_CONFIG="--with-arch=armv7-a --with-fpu=neon"
 			make $MKOPTS OUTPUT="$TOOLS" TARGET=armv7l-linux-musleabihf GCC_CONFIG="--with-arch=armv7-a --with-fpu=neon" install
 			;;
-		armv6)
+		arm)
 			make $MKOPTS TARGET=arm-linux-musleabihf GCC_CONFIG="--with-arch=armv6 --with-fpu=vfp"
 			make $MKOPTS OUTPUT="$TOOLS" TARGET=arm-linux-musleabihf GCC_CONFIG="--with-arch=armv6 --with-fpu=vfp" install
+			;;
+		powerpc64le|powerpc64)
+			make $MKOPTS TARGET=$i-linux-musleabihf GCC_CONFIG="--with-abi=elfv2 --disable-decimal-float --disable-libquadmath"
+			make $MKOPTS OUTPUT="$TOOLS" TARGET=$i-linux-musleabihf GCC_CONFIG="--with-abi=elfv2 --disable-decimal-float --disable-libquadmath" install
+			;;
+		powerpc)
+			make $MKOPTS TARGET=$i-linux-musleabihf GCC_CONFIG="--enable-secureplt --disable-decimal-float"
+			make $MKOPTS OUTPUT="$TOOLS" TARGET=$i-linux-musleabihf GCC_CONFIG="--enable-secureplt --disable-decimal-float" install
 			;;
 		*)
 			make $MKOPTS TARGET=$i-linux-musl
@@ -51,7 +59,7 @@ if [ "$TOOLCHAIN" != "no" ]; then
 	git clone https://github.com/richfelker/musl-cross-make.git --depth 1
 	cd musl-cross-make
 
-	for i in x86_64 aarch64 armv7 armv6 powerpc64le powerpc64 powerpc; do
+	for i in x86_64 aarch64 armv7 arm powerpc64le powerpc64 powerpc; do
 		mktoolchain $i
 	done
 
