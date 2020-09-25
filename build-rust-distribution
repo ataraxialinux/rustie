@@ -6,6 +6,23 @@ clear_vendor_checksums() {
 	sed -i 's/\("files":{\)[^}]*/\1/' vendor/$1/.cargo-checksum.json
 }
 
+mktoolchain() {
+	case $1 in
+		armv7)
+			make $MKOPTS TARGET=armv7l-linux-musleabihf GCC_CONFIG="--with-arch=armv7-a --with-fpu=neon"
+			make $MKOPTS OUTPUT="$TOOLS" TARGET=armv7l-linux-musleabihf GCC_CONFIG="--with-arch=armv7-a --with-fpu=neon" install
+			;;
+		armv6)
+			make $MKOPTS TARGET=arm-linux-musleabihf GCC_CONFIG="--with-arch=armv6 --with-fpu=vfp"
+			make $MKOPTS OUTPUT="$TOOLS" TARGET=arm-linux-musleabihf GCC_CONFIG="--with-arch=armv6 --with-fpu=vfp" install
+			;;
+		*)
+			make $MKOPTS TARGET=$i-linux-musl
+			make $MKOPTS OUTPUT="$TOOLS" TARGET=$i-linux-musl install
+			;;
+	esac
+}
+
 export CWD="$(pwd)"
 export STUFF="$CWD/stuff"
 export OUT="$CWD/out"
@@ -18,27 +35,47 @@ export LC_ALL="POSIX"
 export HOSTCC="gcc"
 export HOSTCXX="g++"
 export XHOST="$(echo ${MACHTYPE} | sed -e 's/-[^-]*/-cross/')"
-export PATH="$SRC/bin:$PATH"
+export PATH="$TOOLS/bin:$SRC/bin:$PATH"
 
 if [ -z $MKOPTS ]; then
 	export MKJOBS="$(expr $(nproc) + 1)"
 fi
 
-export MKOPTS="-j$MKJOBS"
+export MAKEFLAGS="-j$MKJOBS"
 
 rm -rf $OUT
 mkdir -p $SRC $TOOLS
 
 if [ "$TOOLCHAIN" != "no" ]; then
-	cd "$SRC"
-	for i in x86_64-linux-musl aarch64-linux-musl; do
-		wget http://more.musl.cc/10/x86_64-linux-musl/$i-cross.tgz
-		wget http://pkg.musl.cc/libexecinfo/$i.tgz -O libexecinfo-$i.tgz
-		wget http://pkg.musl.cc/openssl/$i.tgz -O openssl-$i.tgz
-		bsdtar -xvf $i-cross.tgz
-		bsdtar -C "$SRC"/$i-cross -xvf libexecinfo-$i.tgz
-		bsdtar -C "$SRC"/$i-cross -xvf openssl-$i.tgz
-		export PATH="$SRC/$i-cross/bin:$PATH"
+	cd $SRC
+	git clone https://github.com/richfelker/musl-cross-make.git --depth 1
+	cd musl-cross-make
+
+	for i in x86_64 aarch64 armv7 armv6 powerpc64le powerpc64 powerpc; do
+		mktoolchain $i
+	done
+
+	cd $SRC
+	wget https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/libressl-2.9.2.tar.gz
+	tar -xvf libressl-2.9.2.tar.gz
+	for i in x86_64-linux-musl aarch64-linux-musl armv7l-linux-musleabihf arm-linux-musleabihf powerpc64le-linux-musl powerpc64-linux-musl powerpc-linux-musl; do
+		case $i in
+			arm*)
+				asm="--disable-asm"
+				;;
+		esac
+
+		cd $SRC/libressl-2.9.2
+		mkdir build-$i
+		cd build-$i
+		CFLAGS="-fPIE -Os -g0 -s -pipe" \
+		../configure \
+			--build=$XHOST \
+			--host=$i \
+			--prefix="$TOOLS/$i" \
+			--disable-shared $asm
+		make $MKOPTS
+		make $MKOPTS install
 	done
 fi
 
@@ -49,11 +86,9 @@ cd rustc-$RUSTVER-src
 
 patch -Np1 -i "$STUFF"/0006-Prefer-libgcc_eh-over-libunwind-for-musl.patch
 patch -Np1 -i "$STUFF"/musl-dont-use-crt-static.patch
-patch -Np1 -i "$STUFF"/1.44.0-libressl.patch
 
 clear_vendor_checksums libc
 clear_vendor_checksums openssl-src
-clear_vendor_checksums openssl-sys
 
 cat << EOF > config.toml
 [llvm]
@@ -62,13 +97,18 @@ release-debuginfo = false
 assertions = false
 static-libstdcpp = true
 ninja = true
-targets = "AArch64;X86"
+targets = "AArch64;ARM;PowerPC;X86"
 
 [build]
 build = "x86_64-unknown-linux-musl"
 host = [
   "x86_64-unknown-linux-musl",
   "aarch64-unknown-linux-musl",
+  "armv7-unknown-linux-musleabihf",
+  "arm-unknown-linux-musleabihf",
+  "powerpc64le-unknown-linux-musl",
+  "powerpc64-unknown-linux-musl",
+  "powerpc-unknown-linux-musl",
 ]
 cargo = "$(which cargo)"
 rustc = "$(which rustc)"
@@ -100,20 +140,60 @@ deny-warnings = false
 cc = "x86_64-linux-musl-gcc"
 cxx = "x86_64-linux-musl-g++"
 linker = "x86_64-linux-musl-gcc"
-musl-root = "$SRC/x86_64-linux-musl-cross/x86_64-linux-musl"
+musl-root = "$TOOLS/x86_64-linux-musl"
 crt-static = false
 
 [target.aarch64-unknown-linux-musl]
 cc = "aarch64-linux-musl-gcc"
 cxx = "aarch64-linux-musl-g++"
 linker = "aarch64-linux-musl-gcc"
-musl-root = "$SRC/aarch64-linux-musl-cross/aarch64-linux-musl"
+musl-root = "$TOOLS/aarch64-linux-musl"
+crt-static = false
+
+[target.armv7-unknown-linux-musleabihf]
+cc = "armv7l-linux-musleabihf-gcc"
+cxx = "armv7l-linux-musleabihf-g++"
+linker = "armv7l-linux-musleabihf-gcc"
+musl-root = "$TOOLS/armv7l-linux-musleabihf"
+crt-static = false
+
+[target.arm-unknown-linux-musleabihf]
+cc = "arm-linux-musleabihf-gcc"
+cxx = "arm-linux-musleabihf-g++"
+linker = "arm-linux-musleabihf-gcc"
+musl-root = "$TOOLS/arm-linux-musleabihf"
+crt-static = false
+
+[target.powerpc64le-unknown-linux-musl]
+cc = "powerpc64le-linux-musl-gcc"
+cxx = "powerpc64le-linux-musl-g++"
+linker = "powerpc64le-linux-musl-gcc"
+musl-root = "$TOOLS/powerpc64le-linux-musl"
+crt-static = false
+
+[target.powerpc64-unknown-linux-musl]
+cc = "powerpc64-linux-musl-gcc"
+cxx = "powerpc64-linux-musl-g++"
+linker = "powerpc64-linux-musl-gcc"
+musl-root = "$TOOLS/powerpc64-linux-musl"
+crt-static = false
+
+[target.powerpc-unknown-linux-musl]
+cc = "powerpc-linux-musl-gcc"
+cxx = "powerpc-linux-musl-g++"
+linker = "powerpc-linux-musl-gcc"
+musl-root = "$TOOLS/powerpc-linux-musl"
 crt-static = false
 EOF
 
 export RUST_BACKTRACE=1
 export SSL_CERT_FILE="/etc/ssl/certs/ca-certificates.crt"
-export X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/x86_64-linux-musl-cross/x86_64-linux-musl"
-export AARCH64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$SRC/aarch64-linux-musl-cross/aarch64-linux-musl"
+export X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$TOOLS/x86_64-linux-musl"
+export AARCH64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$TOOLS/aarch64-linux-musl"
+export ARMV7_UNKNOWN_LINUX_MUSLEABIHF_OPENSSL_DIR="$TOOLS/armv7l-linux-musleabihf"
+export ARM_UNKNOWN_LINUX_MUSLEABIHF_OPENSSL_DIR="$TOOLS/arm-linux-musleabihf"
+export POWERPC64LE_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$TOOLS/powerpc64le-linux-musl"
+export POWERPC64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$TOOLS/powerpc64-linux-musl"
+export POWERPC_UNKNOWN_LINUX_MUSL_OPENSSL_DIR="$TOOLS/powerpc-linux-musl"
 
-./x.py build -j$MKJOBS
+./x.py dist -j$MKJOBS
