@@ -16,6 +16,10 @@ mktoolchain() {
 			make $MKOPTS TARGET=arm-linux-musleabihf GCC_CONFIG="--with-arch=armv6 --with-fpu=vfp"
 			make $MKOPTS OUTPUT="$TOOLS" TARGET=arm-linux-musleabihf GCC_CONFIG="--with-arch=armv6 --with-fpu=vfp" install
 			;;
+		*)
+			make $MKOPTS TARGET=$i-linux-musl
+			make $MKOPTS OUTPUT="$TOOLS" TARGET=$i-linux-musl install
+			;;
 	esac
 }
 
