@@ -105,8 +105,6 @@ host = [
   "armv7-unknown-linux-musleabihf",
   "arm-unknown-linux-musleabihf",
 ]
-cargo = "$(which cargo)"
-rustc = "$(which rustc)"
 docs = false
 compiler-docs  = false
 extended = true
@@ -121,7 +119,7 @@ full-bootstrap = false
 
 [rust]
 channel = "nightly"
-rpath  = false
+rpath = false
 codegen-units = 1
 debuginfo-level = 0
 debug = false
