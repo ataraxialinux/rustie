@@ -29,7 +29,7 @@ export OUT="$CWD/out"
 export SRC="$OUT/src"
 export TOOLS="$OUT/tools"
 
-export RUSTVER="1.46.0"
+export RUSTVER="nightly"
 
 export LC_ALL="POSIX"
 export HOSTCC="gcc"
@@ -85,11 +85,8 @@ wget https://static.rust-lang.org/dist/rustc-$RUSTVER-src.tar.gz
 bsdtar -xvf rustc-$RUSTVER-src.tar.gz
 cd rustc-$RUSTVER-src
 
-patch -Np1 -i "$STUFF"/0006-Prefer-libgcc_eh-over-libunwind-for-musl.patch
-patch -Np1 -i "$STUFF"/musl-dont-use-crt-static.patch
-
-clear_vendor_checksums libc
-clear_vendor_checksums openssl-src
+patch -Np1 -i "$STUFF"/0001-Prefer-libgcc_eh-over-libunwind-for-musl.patch
+patch -Np1 -i "$STUFF"/0002-linux-musl-disable-crt-static.patch
 
 cat << EOF > config.toml
 [llvm]

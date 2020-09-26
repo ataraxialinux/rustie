@@ -1,31 +1,19 @@
-Additions for build.rs by q66, necessary for our musl setup.
+From 224c1d0abe2b2a2ac48f175c43e6aebd1399a455 Mon Sep 17 00:00:00 2001
+From: Ishimoto Shinobu <nagakamira@gmail.com>
+Date: Sat, 26 Sep 2020 18:59:51 +0900
+Subject: [PATCH 1/2] Prefer libgcc_eh over libunwind for musl
 
-From 1eb558f246269606c6d8d73824ef6b44fa10764e Mon Sep 17 00:00:00 2001
-From: Samuel Holland <samuel@sholland.org>
-Date: Sat, 9 Sep 2017 00:14:16 -0500
-Subject: [PATCH 06/16] Prefer libgcc_eh over libunwind for musl
-
+Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
 ---
- src/libunwind/lib.rs | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ library/unwind/build.rs   | 16 ++--------------
+ library/unwind/src/lib.rs |  2 +-
+ 2 files changed, 3 insertions(+), 15 deletions(-)
 
-diff --git a/src/libunwind/lib.rs b/src/libunwind/lib.rs
-index 9182e349b19..0377fbb58fc 100644
---- a/src/libunwind/lib.rs
-+++ b/src/libunwind/lib.rs
-@@ -23,6 +23,6 @@ cfg_if::cfg_if! {
- }
- 
- #[cfg(target_env = "musl")]
--#[link(name = "unwind", kind = "static", cfg(target_feature = "crt-static"))]
-+#[link(name = "gcc_eh", cfg(target_feature = "crt-static"))]
- #[link(name = "gcc_s", cfg(not(target_feature = "crt-static")))]
- extern {}
-diff --git a/src/libunwind/build.rs b/src/libunwind/build.rs
-index f24d957..28828e5 100644
---- a/src/libunwind/build.rs
-+++ b/src/libunwind/build.rs
-@@ -5,17 +5,14 @@
+diff --git a/library/unwind/build.rs b/library/unwind/build.rs
+index ab09a6e32..91f1ec96b 100644
+--- a/library/unwind/build.rs
++++ b/library/unwind/build.rs
+@@ -5,17 +5,14 @@ fn main() {
      let target = env::var("TARGET").expect("TARGET was not set");
  
      if cfg!(feature = "llvm-libunwind")
@@ -45,7 +33,7 @@ index f24d957..28828e5 100644
              println!("cargo:rustc-link-lib=gcc_s");
          }
      } else if target.contains("freebsd") {
-@@ -145,15 +142,6 @@
+@@ -145,15 +142,6 @@ mod llvm_libunwind {
              cfg.file(root.join("src").join(src));
          }
  
@@ -61,3 +49,19 @@ index f24d957..28828e5 100644
          cfg.compile("unwind");
      }
  }
+diff --git a/library/unwind/src/lib.rs b/library/unwind/src/lib.rs
+index 20a2ca984..d3a895ff9 100644
+--- a/library/unwind/src/lib.rs
++++ b/library/unwind/src/lib.rs
+@@ -38,7 +38,7 @@ cfg_if::cfg_if! {
+ }
+ 
+ #[cfg(target_env = "musl")]
+-#[link(name = "unwind", kind = "static", cfg(target_feature = "crt-static"))]
++#[link(name = "gcc_eh", cfg(target_feature = "crt-static"))]
+ #[link(name = "gcc_s", cfg(not(target_feature = "crt-static")))]
+ extern "C" {}
+ 
+-- 
+2.28.0
+
