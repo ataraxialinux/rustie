@@ -57,8 +57,8 @@ if [ "$TOOLCHAIN" != "no" ]; then
 	done
 
 	cd $SRC
-	wget https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/libressl-2.9.2.tar.gz
-	tar -xvf libressl-2.9.2.tar.gz
+	wget https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/libressl-3.1.0.tar.gz
+	tar -xvf libressl-3.1.0.tar.gz
 	for i in x86_64-linux-musl aarch64-linux-musl armv7l-linux-musleabihf arm-linux-musleabihf; do
 		case $i in
 			arm*)
@@ -66,7 +66,7 @@ if [ "$TOOLCHAIN" != "no" ]; then
 				;;
 		esac
 
-		cd $SRC/libressl-2.9.2
+		cd $SRC/libressl-3.1.0
 		mkdir build-$i
 		cd build-$i
 		CFLAGS="-fPIE -Os -g0 -s -pipe" \
