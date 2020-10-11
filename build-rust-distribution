@@ -98,7 +98,6 @@ ninja = true
 targets = "AArch64;ARM;X86"
 
 [build]
-build = "x86_64-unknown-linux-musl"
 host = [
   "x86_64-unknown-linux-musl",
   "aarch64-unknown-linux-musl",

@@ -1,6 +1,6 @@
-From 8cc00ae1cc3f9c17bc8728f1c0abafcb089a5d77 Mon Sep 17 00:00:00 2001
+From 76c42f24669d9d78b2807721490d8ca0c1c48c35 Mon Sep 17 00:00:00 2001
 From: Ishimoto Shinobu <nagakamira@gmail.com>
-Date: Sat, 26 Sep 2020 19:00:55 +0900
+Date: Sun, 11 Oct 2020 22:33:46 +0300
 Subject: [PATCH 2/2] linux-musl: disable crt-static
 
 Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
@@ -9,7 +9,7 @@ Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/compiler/rustc_target/src/spec/linux_musl_base.rs b/compiler/rustc_target/src/spec/linux_musl_base.rs
-index b90e91d29..ad098a47e 100644
+index 16cc3b762..cce5b2b7e 100644
 --- a/compiler/rustc_target/src/spec/linux_musl_base.rs
 +++ b/compiler/rustc_target/src/spec/linux_musl_base.rs
 @@ -9,7 +9,7 @@ pub fn opts() -> TargetOptions {
@@ -18,9 +18,9 @@ index b90e91d29..ad098a47e 100644
      // These targets statically link libc by default
 -    base.crt_static_default = true;
 +    base.crt_static_default = false;
-     // These targets allow the user to choose between static and dynamic linking.
-     base.crt_static_respected = true;
  
+     base
+ }
 -- 
-2.28.0
+2.26.2
 
