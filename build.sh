@@ -41,7 +41,7 @@ main() {
 
 	clear_vendor_checksums openssl-src
 
-	cat >> config.toml<<-EOF
+	cat >> config.toml <<-EOF
 		[llvm]
 		optimize = true
 		release-debuginfo = false
