@@ -1,7 +1,7 @@
-From 76c42f24669d9d78b2807721490d8ca0c1c48c35 Mon Sep 17 00:00:00 2001
+From 187c05b5e9f36b9fe389b49808bcdbd5f5ca4594 Mon Sep 17 00:00:00 2001
 From: Ishimoto Shinobu <nagakamira@gmail.com>
-Date: Sun, 11 Oct 2020 22:33:46 +0300
-Subject: [PATCH 2/2] linux-musl: disable crt-static
+Date: Sun, 14 Feb 2021 18:42:11 +0900
+Subject: [PATCH 2/4] linux-musl: disable crt-static
 
 Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
 ---
@@ -9,10 +9,10 @@ Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/compiler/rustc_target/src/spec/linux_musl_base.rs b/compiler/rustc_target/src/spec/linux_musl_base.rs
-index 16cc3b762..cce5b2b7e 100644
+index 5038a967d..96560bddc 100644
 --- a/compiler/rustc_target/src/spec/linux_musl_base.rs
 +++ b/compiler/rustc_target/src/spec/linux_musl_base.rs
-@@ -9,7 +9,7 @@ pub fn opts() -> TargetOptions {
+@@ -10,7 +10,7 @@ pub fn opts() -> TargetOptions {
      base.crt_objects_fallback = Some(CrtObjectsFallback::Musl);
  
      // These targets statically link libc by default
@@ -22,5 +22,5 @@ index 16cc3b762..cce5b2b7e 100644
      base
  }
 -- 
-2.26.2
+2.29.2
 

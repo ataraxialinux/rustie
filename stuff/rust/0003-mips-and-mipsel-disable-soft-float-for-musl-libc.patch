@@ -1,0 +1,40 @@
+From c4658761bc0892f5a2dd95c2cf7f71a0d978beaa Mon Sep 17 00:00:00 2001
+From: Ishimoto Shinobu <nagakamira@gmail.com>
+Date: Sun, 14 Feb 2021 18:43:20 +0900
+Subject: [PATCH 3/4] mips and mipsel: disable soft-float for musl libc
+
+Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
+---
+ compiler/rustc_target/src/spec/mips_unknown_linux_musl.rs   | 2 +-
+ compiler/rustc_target/src/spec/mipsel_unknown_linux_musl.rs | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/compiler/rustc_target/src/spec/mips_unknown_linux_musl.rs b/compiler/rustc_target/src/spec/mips_unknown_linux_musl.rs
+index 1ebe577bc..f5445f05b 100644
+--- a/compiler/rustc_target/src/spec/mips_unknown_linux_musl.rs
++++ b/compiler/rustc_target/src/spec/mips_unknown_linux_musl.rs
+@@ -3,7 +3,7 @@ use crate::spec::{Target, TargetOptions};
+ pub fn target() -> Target {
+     let mut base = super::linux_musl_base::opts();
+     base.cpu = "mips32r2".to_string();
+-    base.features = "+mips32r2,+soft-float".to_string();
++    base.features = "+mips32r2".to_string();
+     base.max_atomic_width = Some(32);
+     base.crt_static_default = false;
+     Target {
+diff --git a/compiler/rustc_target/src/spec/mipsel_unknown_linux_musl.rs b/compiler/rustc_target/src/spec/mipsel_unknown_linux_musl.rs
+index 3374cdd44..2a8305fb9 100644
+--- a/compiler/rustc_target/src/spec/mipsel_unknown_linux_musl.rs
++++ b/compiler/rustc_target/src/spec/mipsel_unknown_linux_musl.rs
+@@ -3,7 +3,7 @@ use crate::spec::{Target, TargetOptions};
+ pub fn target() -> Target {
+     let mut base = super::linux_musl_base::opts();
+     base.cpu = "mips32r2".to_string();
+-    base.features = "+mips32r2,+soft-float".to_string();
++    base.features = "+mips32r2".to_string();
+     base.max_atomic_width = Some(32);
+     base.crt_static_default = false;
+     Target {
+-- 
+2.29.2
+

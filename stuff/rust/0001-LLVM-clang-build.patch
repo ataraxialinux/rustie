@@ -1,0 +1,212 @@
+From a772d86fdebd666b193c004e59507cb21ce0fe1b Mon Sep 17 00:00:00 2001
+From: Ishimoto Shinobu <nagakamira@gmail.com>
+Date: Sun, 14 Feb 2021 18:41:07 +0900
+Subject: [PATCH 1/4] LLVM/clang build
+
+Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
+---
+ library/unwind/build.rs                         |  9 ---------
+ library/unwind/src/lib.rs                       |  7 +++----
+ .../CodeGen/TargetLoweringObjectFileImpl.cpp    |  2 +-
+ src/llvm-project/llvm/lib/LTO/LTO.cpp           | 17 +++++++++++++++++
+ .../llvm/lib/MC/MCObjectFileInfo.cpp            | 13 +++++--------
+ .../llvm/lib/Object/RelocationResolver.cpp      |  3 +++
+ .../lib/Target/PowerPC/PPCTargetMachine.cpp     |  4 ++++
+ .../lib/Target/RISCV/RISCVTargetMachine.cpp     | 13 +++++++++++++
+ .../llvm/lib/Target/RISCV/RISCVTargetMachine.h  |  3 +++
+ 9 files changed, 49 insertions(+), 22 deletions(-)
+
+diff --git a/library/unwind/build.rs b/library/unwind/build.rs
+index fae760c4a..a360d9967 100644
+--- a/library/unwind/build.rs
++++ b/library/unwind/build.rs
+@@ -141,15 +141,6 @@ mod llvm_libunwind {
+             cfg.file(root.join("src").join(src));
+         }
+ 
+-        if target_env == "musl" {
+-            // use the same C compiler command to compile C++ code so we do not need to setup the
+-            // C++ compiler env variables on the builders
+-            cfg.cpp(false);
+-            // linking for musl is handled in lib.rs
+-            cfg.cargo_metadata(false);
+-            println!("cargo:rustc-link-search=native={}", env::var("OUT_DIR").unwrap());
+-        }
+-
+         cfg.compile("unwind");
+     }
+ }
+diff --git a/library/unwind/src/lib.rs b/library/unwind/src/lib.rs
+index d145c6767..c9bca3d69 100644
+--- a/library/unwind/src/lib.rs
++++ b/library/unwind/src/lib.rs
+@@ -37,8 +37,7 @@ cfg_if::cfg_if! {
+ }
+ 
+ #[cfg(target_env = "musl")]
+-#[link(name = "unwind", kind = "static", cfg(target_feature = "crt-static"))]
+-#[link(name = "gcc_s", cfg(not(target_feature = "crt-static")))]
++#[link(name = "unwind")]
+ extern "C" {}
+ 
+ // When building with crt-static, we get `gcc_eh` from the `libc` crate, since
+@@ -50,7 +49,7 @@ extern "C" {}
+     not(feature = "llvm-libunwind"),
+     not(feature = "system-llvm-libunwind")
+ ))]
+-#[link(name = "gcc_s", cfg(not(target_feature = "crt-static")))]
++#[link(name = "unwind")]
+ extern "C" {}
+ 
+ #[cfg(all(
+@@ -59,7 +58,7 @@ extern "C" {}
+     not(feature = "llvm-libunwind"),
+     feature = "system-llvm-libunwind"
+ ))]
+-#[link(name = "unwind", cfg(not(target_feature = "crt-static")))]
++#[link(name = "unwind")]
+ extern "C" {}
+ 
+ #[cfg(target_os = "redox")]
+diff --git a/src/llvm-project/llvm/lib/CodeGen/TargetLoweringObjectFileImpl.cpp b/src/llvm-project/llvm/lib/CodeGen/TargetLoweringObjectFileImpl.cpp
+index 27bebe503..1a0a65eed 100644
+--- a/src/llvm-project/llvm/lib/CodeGen/TargetLoweringObjectFileImpl.cpp
++++ b/src/llvm-project/llvm/lib/CodeGen/TargetLoweringObjectFileImpl.cpp
+@@ -208,7 +208,7 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
+     // FreeBSD must be explicit about the data size and using pcrel since it's
+     // assembler/linker won't do the automatic conversion that the Linux tools
+     // do.
+-    if (TgtM.getTargetTriple().isOSFreeBSD()) {
++    if (isPositionIndependent() || TgtM.getTargetTriple().isOSFreeBSD()) {
+       PersonalityEncoding |= dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+       LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+     }
+diff --git a/src/llvm-project/llvm/lib/LTO/LTO.cpp b/src/llvm-project/llvm/lib/LTO/LTO.cpp
+index 6e1e3998e..ba0bb04a0 100644
+--- a/src/llvm-project/llvm/lib/LTO/LTO.cpp
++++ b/src/llvm-project/llvm/lib/LTO/LTO.cpp
+@@ -1059,6 +1059,23 @@ Error LTO::runRegularLTO(AddStreamFn AddStream) {
+         GV->setLinkage(GlobalValue::InternalLinkage);
+     }
+ 
++    // ThinLTO would link CombinedModule object with input file object later
++    // but different target abi object can not linked together
++    // add target-abi module flag from first input file into CombinedModule.
++    if (!ThinLTO.ModuleMap.empty()) {
++      LTOLLVMContext BackendContext(Conf);
++      auto &Mod = ThinLTO.ModuleMap.front();
++      auto MOrErr = Mod.second.parseModule(BackendContext);
++      if (MOrErr) {
++        if (const MDString *ModuleTargetABI = dyn_cast_or_null<MDString>(
++                (*MOrErr)->getModuleFlag("target-abi"))) {
++          llvm::LLVMContext &Ctx = RegularLTO.CombinedModule->getContext();
++          RegularLTO.CombinedModule->addModuleFlag(
++              llvm::Module::Error, "target-abi",
++              llvm::MDString::get(Ctx, ModuleTargetABI->getString()));
++        }
++      }
++    }
+     RegularLTO.CombinedModule->addModuleFlag(Module::Error, "LTOPostLink", 1);
+ 
+     if (Conf.PostInternalizeModuleHook &&
+diff --git a/src/llvm-project/llvm/lib/MC/MCObjectFileInfo.cpp b/src/llvm-project/llvm/lib/MC/MCObjectFileInfo.cpp
+index b77a9635f..b3c6f8ece 100644
+--- a/src/llvm-project/llvm/lib/MC/MCObjectFileInfo.cpp
++++ b/src/llvm-project/llvm/lib/MC/MCObjectFileInfo.cpp
+@@ -306,14 +306,11 @@ void MCObjectFileInfo::initELFMCObjectFileInfo(const Triple &T, bool Large) {
+   case Triple::mipsel:
+   case Triple::mips64:
+   case Triple::mips64el:
+-    // We cannot use DW_EH_PE_sdata8 for the large PositionIndependent case
+-    // since there is no R_MIPS_PC64 relocation (only a 32-bit version).
+-    if (PositionIndependent && !Large)
+-      FDECFIEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+-    else
+-      FDECFIEncoding = Ctx->getAsmInfo()->getCodePointerSize() == 4
+-                           ? dwarf::DW_EH_PE_sdata4
+-                           : dwarf::DW_EH_PE_sdata8;
++    FDECFIEncoding = Ctx->getAsmInfo()->getCodePointerSize() == 4
++                         ? dwarf::DW_EH_PE_sdata4
++                         : dwarf::DW_EH_PE_sdata8;
++    if (PositionIndependent)
++      FDECFIEncoding |= dwarf::DW_EH_PE_pcrel;
+     break;
+   case Triple::ppc64:
+   case Triple::ppc64le:
+diff --git a/src/llvm-project/llvm/lib/Object/RelocationResolver.cpp b/src/llvm-project/llvm/lib/Object/RelocationResolver.cpp
+index ad7a50d13..0b90482d0 100644
+--- a/src/llvm-project/llvm/lib/Object/RelocationResolver.cpp
++++ b/src/llvm-project/llvm/lib/Object/RelocationResolver.cpp
+@@ -334,6 +334,7 @@ static uint64_t resolveLanai(RelocationRef R, uint64_t S, uint64_t A) {
+ static bool supportsMips32(uint64_t Type) {
+   switch (Type) {
+   case ELF::R_MIPS_32:
++  case ELF::R_MIPS_PC32:
+   case ELF::R_MIPS_TLS_DTPREL32:
+     return true;
+   default:
+@@ -346,6 +347,8 @@ static uint64_t resolveMips32(RelocationRef R, uint64_t S, uint64_t A) {
+   uint32_t Rel = R.getType();
+   if (Rel == ELF::R_MIPS_32)
+     return (S + A) & 0xFFFFFFFF;
++  if (Rel == ELF::R_MIPS_PC32)
++    return (S + getELFAddend(R) - R.getOffset()) & 0xFFFFFFFF;
+   if (Rel == ELF::R_MIPS_TLS_DTPREL32)
+     return (S + A) & 0xFFFFFFFF;
+   llvm_unreachable("Invalid relocation type");
+diff --git a/src/llvm-project/llvm/lib/Target/PowerPC/PPCTargetMachine.cpp b/src/llvm-project/llvm/lib/Target/PowerPC/PPCTargetMachine.cpp
+index f15f9c7f4..53b5a0ae8 100644
+--- a/src/llvm-project/llvm/lib/Target/PowerPC/PPCTargetMachine.cpp
++++ b/src/llvm-project/llvm/lib/Target/PowerPC/PPCTargetMachine.cpp
+@@ -216,6 +216,10 @@ static PPCTargetMachine::PPCABI computeTargetABI(const Triple &TT,
+   case Triple::ppc64le:
+     return PPCTargetMachine::PPC_ABI_ELFv2;
+   case Triple::ppc64:
++    // musl uses ELFv2 ABI on both endians.
++    if (TT.getEnvironment() == Triple::Musl)
++      return PPCTargetMachine::PPC_ABI_ELFv2;
++
+     return PPCTargetMachine::PPC_ABI_ELFv1;
+   default:
+     return PPCTargetMachine::PPC_ABI_UNKNOWN;
+diff --git a/src/llvm-project/llvm/lib/Target/RISCV/RISCVTargetMachine.cpp b/src/llvm-project/llvm/lib/Target/RISCV/RISCVTargetMachine.cpp
+index 75683e2fd..cbd72fe61 100644
+--- a/src/llvm-project/llvm/lib/Target/RISCV/RISCVTargetMachine.cpp
++++ b/src/llvm-project/llvm/lib/Target/RISCV/RISCVTargetMachine.cpp
+@@ -105,6 +105,19 @@ RISCVTargetMachine::getSubtargetImpl(const Function &F) const {
+   return I.get();
+ }
+ 
++void RISCVTargetMachine::setTargetOptionsWithModuleMetadata(
++    const Module &M LLVM_ATTRIBUTE_UNUSED) const {
++  StringRef ABIName = Options.MCOptions.getABIName();
++  if (const MDString *ModuleTargetABI =
++          dyn_cast_or_null<MDString>(M.getModuleFlag("target-abi"))) {
++    StringRef ModuleABIName = ModuleTargetABI->getString();
++    if (!ABIName.empty() && ModuleABIName != ABIName)
++      report_fatal_error("-target-abi option != target-abi module flag");
++    if (ABIName.empty())
++      Options.MCOptions.ABIName = ModuleABIName.str();
++  }
++}
++
+ TargetTransformInfo
+ RISCVTargetMachine::getTargetTransformInfo(const Function &F) {
+   return TargetTransformInfo(RISCVTTIImpl(this, F));
+diff --git a/src/llvm-project/llvm/lib/Target/RISCV/RISCVTargetMachine.h b/src/llvm-project/llvm/lib/Target/RISCV/RISCVTargetMachine.h
+index a4476fa40..c98c270c2 100644
+--- a/src/llvm-project/llvm/lib/Target/RISCV/RISCVTargetMachine.h
++++ b/src/llvm-project/llvm/lib/Target/RISCV/RISCVTargetMachine.h
+@@ -42,6 +42,9 @@ public:
+     return TLOF.get();
+   }
+ 
++  void setTargetOptionsWithModuleMetadata(
++      const Module &M LLVM_ATTRIBUTE_UNUSED) const;
++
+   TargetTransformInfo getTargetTransformInfo(const Function &F) override;
+ };
+ }
+-- 
+2.29.2
+
