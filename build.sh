@@ -23,6 +23,8 @@ main() {
 		if [ ! -f "$ATAROOT/OUT.${i}/.toolchain_stamp" ]; then
 			echo "Toolchain for $i is not found"
 			exit 1
+		else
+			export PATH="$ATAROOT/OUT.${i}/tools/bin:$PATH"
 		fi
 	done
 
@@ -90,61 +92,63 @@ main() {
 		rpath = true
 
 		[target.x86_64-unknown-linux-musl]
-		cc = "$ATAROOT/OUT.amd64/tools/bin/x86_64-linux-musl-clang"
-		cxx = "$ATAROOT/OUT.amd64/tools/bin/x86_64-linux-musl-clang++"
-		linker = "$ATAROOT/OUT.amd64/tools/bin/x86_64-linux-musl-clang"
+		cc = "x86_64-linux-musl-clang"
+		cxx = "x86_64-linux-musl-clang++"
+		linker = "x86_64-linux-musl-clang"
 		musl-root = "$ATAROOT/OUT.amd64/rootfs/usr"
 		crt-static = false
 
 		[target.i686-unknown-linux-musl]
-		cc = "$ATAROOT/OUT.x86/tools/bin/i386-linux-musl-clang"
-		cxx = "$ATAROOT/OUT.x86/tools/bin/i386-linux-musl-clang++"
-		linker = "$ATAROOT/OUT.x86/tools/bin/i386-linux-musl-clang"
+		cc = "i386-linux-musl-clang"
+		cxx = "i386-linux-musl-clang++"
+		linker = "i386-linux-musl-clang"
 		musl-root = "$ATAROOT/OUT.x86/rootfs/usr"
 		crt-static = false
 
 		[target.aarch64-unknown-linux-musl]
-		cc = "$ATAROOT/OUT.arm64/tools/bin/aarch64-linux-musl-clang"
-		cxx = "$ATAROOT/OUT.arm64/tools/bin/aarch64-linux-musl-clang++"
-		linker = "$ATAROOT/OUT.arm64/tools/bin/aarch64-linux-musl-clang"
+		cc = "aarch64-linux-musl-clang"
+		cxx = "aarch64-linux-musl-clang++"
+		linker = "aarch64-linux-musl-clang"
 		musl-root = "$ATAROOT/OUT.arm64/rootfs/usr"
 		crt-static = false
 
 		[target.armv7-unknown-linux-musleabihf]
-		cc = "$ATAROOT/OUT.armv7l/tools/bin/armv7l-linux-musleabihf-clang"
-		cxx = "$ATAROOT/OUT.armv7l/tools/bin/armv7l-linux-musleabihf-clang++"
-		linker = "$ATAROOT/OUT.armv7l/tools/bin/armv7l-linux-musleabihf-clang"
+		cc = "armv7l-linux-musleabihf-clang"
+		cxx = "armv7l-linux-musleabihf-clang++"
+		linker = "armv7l-linux-musleabihf-clang"
 		musl-root = "$ATAROOT/OUT.armv7l/rootfs/usr"
 		crt-static = false
 
 		[target.mips64-unknown-linux-muslabi64]
-		cc = "$ATAROOT/OUT.mips64/tools/bin/mips64-linux-musl-clang"
-		cxx = "$ATAROOT/OUT.mips64/tools/bin/mips64-linux-musl-clang++"
-		linker = "$ATAROOT/OUT.mips64/tools/bin/mips64-linux-musl-clang"
+		cc = "mips64-linux-musl-clang"
+		cxx = "mips64-linux-musl-clang++"
+		linker = "mips64-linux-musl-clang"
 		musl-root = "$ATAROOT/OUT.mips64/rootfs/usr"
 		crt-static = false
 
 		[target.mips64el-unknown-linux-muslabi64]
-		cc = "$ATAROOT/OUT.mips64el/tools/bin/mips64el-linux-musl-clang"
-		cxx = "$ATAROOT/OUT.mips64el/tools/bin/mips64el-linux-musl-clang++"
-		linker = "$ATAROOT/OUT.mips64el/tools/bin/mips64el-linux-musl-clang"
+		cc = "mips64el-linux-musl-clang"
+		cxx = "mips64el-linux-musl-clang++"
+		linker = "mips64el-linux-musl-clang"
 		musl-root = "$ATAROOT/OUT.mips64el/rootfs/usr"
 		crt-static = false
 
 		[target.mips-unknown-linux-musl]
-		cc = "$ATAROOT/OUT.mips/tools/bin/mips-linux-musl-clang"
-		cxx = "$ATAROOT/OUT.mips/tools/bin/mips-linux-musl-clang++"
-		linker = "$ATAROOT/OUT.mips/tools/bin/mips-linux-musl-clang"
+		cc = "mips-linux-musl-clang"
+		cxx = "mips-linux-musl-clang++"
+		linker = "mips-linux-musl-clang"
 		musl-root = "$ATAROOT/OUT.mips/rootfs/usr"
 		crt-static = false
 
 		[target.mipsel-unknown-linux-musl]
-		cc = "$ATAROOT/OUT.mipsel/tools/bin/mipsel-linux-musl-clang"
-		cxx = "$ATAROOT/OUT.mipsel/tools/bin/mipsel-linux-musl-clang++"
-		linker = "$ATAROOT/OUT.mipsel/tools/bin/mipsel-linux-musl-clang"
+		cc = "mipsel-linux-musl-clang"
+		cxx = "mipsel-linux-musl-clang++"
+		linker = "mipsel-linux-musl-clang"
 		musl-root = "$ATAROOT/OUT.mipsel/rootfs/usr"
 		crt-static = false
 	EOF
+
+	./x.py dist -j$(nproc)
 }
 
 main "$@"
