@@ -1,7 +1,7 @@
-From c4658761bc0892f5a2dd95c2cf7f71a0d978beaa Mon Sep 17 00:00:00 2001
+From caeb8fe79ebf701f042b77abd99e722db88d82b8 Mon Sep 17 00:00:00 2001
 From: Ishimoto Shinobu <nagakamira@gmail.com>
-Date: Sun, 14 Feb 2021 18:43:20 +0900
-Subject: [PATCH 3/4] mips and mipsel: disable soft-float for musl libc
+Date: Wed, 17 Feb 2021 01:30:14 +0900
+Subject: [PATCH 3/4] mips and mipsel: disable soft-float on musl libc
 
 Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
 ---

@@ -1,12 +1,12 @@
-From a772d86fdebd666b193c004e59507cb21ce0fe1b Mon Sep 17 00:00:00 2001
+From cad32b6b6cce6c5232065d8fd7fbe33bc6dff15b Mon Sep 17 00:00:00 2001
 From: Ishimoto Shinobu <nagakamira@gmail.com>
-Date: Sun, 14 Feb 2021 18:41:07 +0900
+Date: Wed, 17 Feb 2021 01:28:49 +0900
 Subject: [PATCH 1/4] LLVM/clang build
 
 Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
 ---
- library/unwind/build.rs                         |  9 ---------
- library/unwind/src/lib.rs                       |  7 +++----
+ library/unwind/build.rs                         | 12 +-----------
+ library/unwind/src/lib.rs                       |  3 +--
  .../CodeGen/TargetLoweringObjectFileImpl.cpp    |  2 +-
  src/llvm-project/llvm/lib/LTO/LTO.cpp           | 17 +++++++++++++++++
  .../llvm/lib/MC/MCObjectFileInfo.cpp            | 13 +++++--------
@@ -14,13 +14,24 @@ Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
  .../lib/Target/PowerPC/PPCTargetMachine.cpp     |  4 ++++
  .../lib/Target/RISCV/RISCVTargetMachine.cpp     | 13 +++++++++++++
  .../llvm/lib/Target/RISCV/RISCVTargetMachine.h  |  3 +++
- 9 files changed, 49 insertions(+), 22 deletions(-)
+ 9 files changed, 48 insertions(+), 22 deletions(-)
 
 diff --git a/library/unwind/build.rs b/library/unwind/build.rs
-index fae760c4a..a360d9967 100644
+index fae760c4a..3bf162bdc 100644
 --- a/library/unwind/build.rs
 +++ b/library/unwind/build.rs
-@@ -141,15 +141,6 @@ mod llvm_libunwind {
+@@ -12,9 +12,8 @@ fn main() {
+     } else if target.contains("x86_64-fortanix-unknown-sgx") {
+         llvm_libunwind::compile();
+     } else if target.contains("linux") {
+-        // linking for Linux is handled in lib.rs
+         if target.contains("musl") {
+-            llvm_libunwind::compile();
++            println!("cargo:rustc-link-lib=unwind")
+         }
+     } else if target.contains("freebsd") {
+         println!("cargo:rustc-link-lib=gcc_s");
+@@ -141,15 +140,6 @@ mod llvm_libunwind {
              cfg.file(root.join("src").join(src));
          }
  
@@ -37,7 +48,7 @@ index fae760c4a..a360d9967 100644
      }
  }
 diff --git a/library/unwind/src/lib.rs b/library/unwind/src/lib.rs
-index d145c6767..c9bca3d69 100644
+index d145c6767..29529024c 100644
 --- a/library/unwind/src/lib.rs
 +++ b/library/unwind/src/lib.rs
 @@ -37,8 +37,7 @@ cfg_if::cfg_if! {
@@ -50,24 +61,6 @@ index d145c6767..c9bca3d69 100644
  extern "C" {}
  
  // When building with crt-static, we get `gcc_eh` from the `libc` crate, since
-@@ -50,7 +49,7 @@ extern "C" {}
-     not(feature = "llvm-libunwind"),
-     not(feature = "system-llvm-libunwind")
- ))]
--#[link(name = "gcc_s", cfg(not(target_feature = "crt-static")))]
-+#[link(name = "unwind")]
- extern "C" {}
- 
- #[cfg(all(
-@@ -59,7 +58,7 @@ extern "C" {}
-     not(feature = "llvm-libunwind"),
-     feature = "system-llvm-libunwind"
- ))]
--#[link(name = "unwind", cfg(not(target_feature = "crt-static")))]
-+#[link(name = "unwind")]
- extern "C" {}
- 
- #[cfg(target_os = "redox")]
 diff --git a/src/llvm-project/llvm/lib/CodeGen/TargetLoweringObjectFileImpl.cpp b/src/llvm-project/llvm/lib/CodeGen/TargetLoweringObjectFileImpl.cpp
 index 27bebe503..1a0a65eed 100644
 --- a/src/llvm-project/llvm/lib/CodeGen/TargetLoweringObjectFileImpl.cpp

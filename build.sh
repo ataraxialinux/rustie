@@ -36,7 +36,7 @@ main() {
 	cd rustc-$RUSTVER-src
 	patch -Np1 -i "$STUFF"/rust/0001-LLVM-clang-build.patch
 	patch -Np1 -i "$STUFF"/rust/0002-linux-musl-disable-crt-static.patch
-	patch -Np1 -i "$STUFF"/rust/0003-mips-and-mipsel-disable-soft-float-for-musl-libc.patch
+	patch -Np1 -i "$STUFF"/rust/0003-mips-and-mipsel-disable-soft-float-on-musl-libc.patch
 	patch -Np1 -i "$STUFF"/rust/0004-openssl-src-add-more-linux-musl-targets.patch
 
 	clear_vendor_checksums openssl-src
@@ -86,7 +86,6 @@ main() {
 		debug-assertions = false
 		debuginfo-level = 0
 		jemalloc = false
-		llvm-libunwind = "system"
 		rpath = true
 
 		[target.x86_64-unknown-linux-musl]

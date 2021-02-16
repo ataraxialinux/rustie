@@ -1,6 +1,6 @@
-From 187c05b5e9f36b9fe389b49808bcdbd5f5ca4594 Mon Sep 17 00:00:00 2001
+From dfb3b14916833632e5c95adf2dbec32bb5133b4a Mon Sep 17 00:00:00 2001
 From: Ishimoto Shinobu <nagakamira@gmail.com>
-Date: Sun, 14 Feb 2021 18:42:11 +0900
+Date: Wed, 17 Feb 2021 01:29:37 +0900
 Subject: [PATCH 2/4] linux-musl: disable crt-static
 
 Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
