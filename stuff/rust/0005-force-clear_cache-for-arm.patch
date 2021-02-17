@@ -1,0 +1,33 @@
+From 0dd0a84cb70b35d0cb6a4440fdcb3d51bca3c29f Mon Sep 17 00:00:00 2001
+From: Ishimoto Shinobu <nagakamira@gmail.com>
+Date: Wed, 17 Feb 2021 06:55:50 +0900
+Subject: [PATCH 5/5] force clear_cache for arm
+
+Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
+---
+ vendor/compiler_builtins/build.rs | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/vendor/compiler_builtins/build.rs b/vendor/compiler_builtins/build.rs
+index f948edba9..83a85acf2 100644
+--- a/vendor/compiler_builtins/build.rs
++++ b/vendor/compiler_builtins/build.rs
+@@ -364,6 +364,7 @@ mod c {
+                 ("__sync_fetch_and_umin_8", "arm/sync_fetch_and_umin_8.S"),
+                 ("__sync_fetch_and_xor_4", "arm/sync_fetch_and_xor_4.S"),
+                 ("__sync_fetch_and_xor_8", "arm/sync_fetch_and_xor_8.S"),
++                ("__clear_cache", "clear_cache.c"),
+             ]);
+         }
+ 
+@@ -414,6 +415,7 @@ mod c {
+                 ("__floatunsitf", "floatunsitf.c"),
+                 ("__trunctfdf2", "trunctfdf2.c"),
+                 ("__trunctfsf2", "trunctfsf2.c"),
++                ("__clear_cache", "clear_cache.c"),
+             ]);
+ 
+             if target_os != "windows" {
+-- 
+2.29.2
+

@@ -1,7 +1,7 @@
-From 430c2d9289713233669925f632853fd2ff929726 Mon Sep 17 00:00:00 2001
+From c92db3141f28812852109fc3a4ba174116247b93 Mon Sep 17 00:00:00 2001
 From: Ishimoto Shinobu <nagakamira@gmail.com>
-Date: Wed, 17 Feb 2021 01:32:51 +0900
-Subject: [PATCH 4/4] openssl-src: add more linux-musl targets
+Date: Wed, 17 Feb 2021 06:53:42 +0900
+Subject: [PATCH 4/5] openssl-src: add more linux-musl targets
 
 Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
 ---

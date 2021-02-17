@@ -1,7 +1,7 @@
-From cad32b6b6cce6c5232065d8fd7fbe33bc6dff15b Mon Sep 17 00:00:00 2001
+From bc6f332c36eaa942f4fcd2ae8bf1fcf681bb2d86 Mon Sep 17 00:00:00 2001
 From: Ishimoto Shinobu <nagakamira@gmail.com>
-Date: Wed, 17 Feb 2021 01:28:49 +0900
-Subject: [PATCH 1/4] LLVM/clang build
+Date: Wed, 17 Feb 2021 06:52:44 +0900
+Subject: [PATCH 1/5] LLVM/clang build
 
 Signed-off-by: Ishimoto Shinobu <nagakamira@gmail.com>
 ---
